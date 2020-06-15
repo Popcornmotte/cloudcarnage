@@ -1,0 +1,86 @@
+[gd_scene load_steps=4 format=2]
+
+[ext_resource path="res://Fonts/font0.tres" type="DynamicFont" id=1]
+[ext_resource path="res://Assets/Audio/control/no.wav" type="AudioStream" id=2]
+
+[sub_resource type="GDScript" id=1]
+script/source = "extends Control
+
+onready var sound = $AudioStreamPlayer
+var scene
+var menu
+
+func _ready():
+	menu = $VBoxContainer/Configurations
+
+func _input(event):
+	if event.is_action_pressed(\"pause\"):
+		var new_pause_state = not get_tree().paused
+		get_tree().paused = new_pause_state
+		visible = new_pause_state
+		menu.grab_focus()
+
+func _on_Menu_pressed():
+	sound.play()
+	scene = \"res://Scenes/Game/Options.tscn\"
+	get_tree().paused = false
+	visible = false
+
+func _on_AudioStreamPlayer_finished():
+	get_tree().change_scene(scene)
+"
+
+[node name="PauseMenu" type="CanvasLayer"]
+layer = 100
+
+[node name="Pause" type="Control" parent="."]
+pause_mode = 2
+visible = false
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = SubResource( 1 )
+
+[node name="BlackLayer" type="ColorRect" parent="Pause"]
+visible = false
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color( 0, 0, 0, 0.25098 )
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Pause"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+alignment = 1
+
+[node name="Pause" type="Label" parent="Pause/VBoxContainer"]
+margin_top = 218.0
+margin_right = 1024.0
+margin_bottom = 254.0
+custom_fonts/font = ExtResource( 1 )
+custom_colors/font_color_shadow = Color( 1, 0.592157, 0, 1 )
+text = "Paused"
+align = 1
+valign = 1
+
+[node name="Note" type="Label" parent="Pause/VBoxContainer"]
+margin_top = 258.0
+margin_right = 1024.0
+margin_bottom = 333.0
+custom_fonts/font = ExtResource( 1 )
+custom_colors/font_color_shadow = Color( 1, 0.592157, 0, 1 )
+text = "
+Press    \"Start\"    or    \"Esc\"   to continue"
+align = 1
+valign = 2
+
+[node name="Configurations" type="Button" parent="Pause/VBoxContainer"]
+margin_top = 337.0
+margin_right = 1024.0
+margin_bottom = 357.0
+size_flags_horizontal = 3
+text = "Configure your Weapons"
+
+[node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="Pause"]
+stream = ExtResource( 2 )
+volume_db = -20.0
+[connection signal="pressed" from="Pause/VBoxContainer/Configurations" to="Pause" method="_on_Menu_pressed"]
+[connection signal="finished" from="Pause/AudioStreamPlayer" to="Pause" method="_on_AudioStreamPlayer_finished"]

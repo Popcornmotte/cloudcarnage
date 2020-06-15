@@ -11,7 +11,7 @@ func _ready():
 
 func _on_NewGameButton_pressed():
 	sound.play()
-	scene = "res://Scenes/Arena.tscn"
+	scene = "res://Scenes/Game/Options.tscn"
 
 func _on_ContinueButton_pressed():
 	sound.play()

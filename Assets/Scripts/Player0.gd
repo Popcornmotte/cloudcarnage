@@ -3,8 +3,8 @@ extends KinematicBody2D
 const UP = Vector2(0,-1); #this is up, duh
 const SPEED = 400; #maximum movement speed
 const ACCELERATION = 110; #maximum acceleration
-const JUMPFORCE = -450; #maximum jump force. negative because up is negative
-const GRAVITY = 27; #personalized player gravity. N SHIT
+const JUMPFORCE = -300; #maximum jump force. negative because up is negative
+const GRAVITY = 25; #personalized player gravity. N SHIT
 
 var WEAPON #pseudo-constante  WORKAROUND FFFFUCKERS
 var weapon
@@ -13,7 +13,7 @@ var friction = false; #friction
 #steptimer?
 var flip = false;  ###maybe for weapons? extra object?
 var jumpforce = 0; #variable. jumpforce should be dynamically decreased by GRAVITY
-#var dead = false;
+var doubleJump = 1
 const steps = [preload("res://Assets/Audio/movement/step5.wav"),preload("res://Assets/Audio/movement/step1.wav"),preload("res://Assets/Audio/movement/step2.wav"),preload("res://Assets/Audio/movement/step3.wav")]
 
 var hp = 100
@@ -61,6 +61,7 @@ func getPlayerNum():
 	return playerNum
 
 func death():
+	weapon.enable(false)
 	$AnimatedSprite.speed_scale = 1
 	$AudioDeath.play()
 	dead = true
@@ -76,11 +77,10 @@ func death():
 	$AnimatedSprite.play(sprites[5])
 
 func spawn():
-	$Hitbox.monitoring = true
 	$AudioSpawn.play()
 	$AnimatedSprite.play(sprites[6])
 	var spawnNum = randi()%4
-	position = spawnPoints[spawnNum].position	
+	position = spawnPoints[spawnNum].position
 
 func calcMultiplier(var e):
 	if element == "flame":
@@ -134,6 +134,11 @@ func hitmarker():
 		yield(get_tree().create_timer(0.1),"timeout")
 		$AnimatedSprite.modulate = false  #BUG
 
+func jump():
+	$AudioJump.play()
+	jumpforce = -80
+	motion.y = JUMPFORCE
+
 func move():
 	
 	#sprite speed scale
@@ -164,35 +169,21 @@ func move():
 		$AnimatedSprite.play(sprites[0])
 	pass
 	
-func inAir():
+func inAir():  #Jumpstuff also is on floor stuff
 	if is_on_floor():
+		doubleJump = 1
 		if (Input.is_action_pressed(input[1]) or Input.is_action_pressed(input[2])):
 			if !$AudioStep.playing:
 				$AudioStep.stream = steps[randi()%4]
 				$AudioStep.play()
 		
 		if Input.is_action_just_pressed(input[3]):
-			$AudioJump.play()
-			jumpforce = -40
-			motion.y = JUMPFORCE
+			jump()
 		if friction == true:
 			motion.x = lerp(motion.x,0,0.3)
-	else:
-		$AudioStep.stop()
-		if Input.is_action_pressed(input[3]):
-			motion.y += jumpforce
-		jumpforce = lerp(jumpforce, 0, 0.1)
-		if friction == true:
-			motion.x = lerp(motion.x,0,0.1)
-		if motion.y < 0:
-			$AnimatedSprite.play(sprites[2])
-			
-		if motion.y > 0:
-			$AnimatedSprite.play(sprites[3])
-	
-	
-	if is_on_wall() and !is_on_floor(): #and !Input.is_action_pressed("ui_accept"):  #wall jump stuff. maybe climbing stuff as well. code not stuff. sorry
+	elif is_on_wall(): #and !Input.is_action_pressed("ui_accept"):  #wall jump stuff. maybe climbing stuff as well. code not stuff. sorry
 		motion.y = 100
+		doubleJump = 1
 		if !$AudioWallslide.playing:
 			$AudioWallslide.play()
 		$AnimatedSprite.play(sprites[4])
@@ -200,14 +191,31 @@ func inAir():
 		if flip == true:
 			if Input.is_action_just_pressed(input[3]) and Input.is_action_pressed(input[1]):
 				motion.y = JUMPFORCE*1.5
-				motion.x = -SPEED*1.8
+				motion.x = -SPEED*1.5
 		else:
 			if Input.is_action_just_pressed(input[3]) and Input.is_action_pressed(input[2]):
 				motion.y = JUMPFORCE*1.5
-				motion.x = SPEED*1.8
-	else: 
+				motion.x = SPEED*1.5
+	elif doubleJump > 0 and Input.is_action_just_pressed(input[3]):
+		doubleJump-=1
+		jump()
+		
+	else:
+		$AudioStep.stop()
+		if Input.is_action_pressed(input[3]):
+			motion.y += jumpforce
+		jumpforce = lerp(jumpforce, 0, 0.15)
+		if friction == true:
+			motion.x = lerp(motion.x,0,0.1)
+		if motion.y < 0:
+			$AnimatedSprite.play(sprites[2])
+			
+		if motion.y > 0:
+			$AnimatedSprite.play(sprites[3])
+			
 		weapon.enable(true)
 		$AudioWallslide.stop()
+	
 	
 	if is_on_ceiling():
 		motion.y += -JUMPFORCE/3
@@ -259,4 +267,7 @@ func _on_AnimatedSprite_animation_finished():
 		pass
 	elif $AnimatedSprite.animation == sprites[6]:
 		dead = false
+		$Hitbox.monitoring = true
+		weapon.enable(true)
+		
 	pass # Replace with function body.

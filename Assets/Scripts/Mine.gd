@@ -56,18 +56,17 @@ func _ready():
 	pass # Replace with function body.
 
 func _physics_process(delta):
-	
-	motion.y += GRAVITY #Grtavity n sSIOHTiukswareh ölotis
-	motion.y = min(motion.y, 800)
-	
 	if timer > 0:
 		timer -= delta
 	else:
 		explode()
 	
 	if is_on_floor():
+		motion.y = 0
 		motion.x = lerp(motion.x,0,0.1)
 	else:
+		motion.y += GRAVITY #Grtavity n sSIOHTiukswareh ölotis
+		motion.y = min(motion.y, 450)
 		motion.x = lerp(motion.x,0,0.001)
 	
 	move_and_slide(motion, Vector2(0,-1))
